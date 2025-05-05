@@ -1,0 +1,24 @@
+[
+    {
+      "name": "東京駅",
+      "lat": 35.681236,
+      "lng": 139.767125,
+      "url": "https://ja.wikipedia.org/wiki/東京駅",
+      "tags": ["歴史", "近代建築"]
+    },
+    {
+      "name": "上野恩賜公園",
+      "lat": 35.715298,
+      "lng": 139.774054,
+      "url": "https://www.tokyo-park.or.jp/park/format/index038.html",
+      "tags": ["自然", "観光"]
+    },
+    {
+      "name": "浅草寺",
+      "lat": 35.714765,
+      "lng": 139.796655,
+      "url": "https://www.senso-ji.jp/",
+      "tags": ["歴史", "寺院"]
+    }
+  ]
+  
