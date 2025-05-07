@@ -1,9 +1,19 @@
 "use strict";
+// 地図の初期化（とりあえず東京駅）
 const map = L.map('map').setView([35.681236, 139.767125], 12);
+// タイルレイヤー追加
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
+// ✅ 現在地取得
+map.locate({ setView: true, maxZoom: 16 });
 let allMarkers = [];
+map.on('locationfound', (e) => {
+    L.marker(e.latlng)
+        .addTo(map)
+        .bindPopup('現在地')
+        .openPopup();
+});
 fetch('./data/places.json')
     .then(res => res.json())
     .then((places) => {
@@ -48,3 +58,6 @@ function showMarkers(places) {
         allMarkers.push(marker);
     });
 }
+map.on('locationerror', (e) => {
+    alert('現在地の取得に失敗しました。ブラウザの位置情報設定をご確認ください。');
+});
