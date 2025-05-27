@@ -2,7 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Leaflet Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ドラゴンレーダー風地図</title>
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -10,39 +11,114 @@
   <style>
     html, body {
       margin: 0;
-      padding: 0;
       height: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-  
-    #tag-buttons {
-      padding: 10px;
-      background-color: #f8f8f8;
+
+    .radar-frame {
+      position: relative;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     }
-  
-    #tag-buttons button {
-      padding: 6px 12px;
-      background-color: #ddd;
-      border: none;
-      border-radius: 4px;
-      margin: 4px;
-      cursor: pointer;
+
+    .frame-overlay {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
     }
-  
-    #tag-buttons button:hover {
-      background-color: #ccc;
-    }
-  
+
     #map {
-      height: calc(100% - 60px); /* 上のボタン領域の高さを引いた分に調整 */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      clip-path: circle(50% at 50% 50%);
+      z-index: 1;
     }
-  </style>  
+
+    #radar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
 </head>
 <body>
-    <div id="tag-buttons" style="padding: 10px;"></div>
+  <div class="radar-frame">
+    <img src="./dragon_radar_frame_transparent.png" class="frame-overlay" alt="ドラゴンレーダー枠">
     <div id="map"></div>
-  
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="./dist/main.js"></script>
-  </body>
-  
+    <canvas id="radar-overlay" width="600" height="600"></canvas>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map', {
+      zoomControl: true,
+      attributionControl: false,
+      dragging: false,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      boxZoom: false,
+      keyboard: false,
+      touchZoom: true
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    const canvas = document.getElementById("radar-overlay");
+    const ctx = canvas.getContext("2d");
+
+    map.locate({ watch: true, setView: true, maxZoom: 18 });
+
+    map.on('locationfound', function (e) {
+      const currentLatLng = e.latlng;
+
+      map.setView(currentLatLng, map.getZoom());
+
+      L.marker(currentLatLng, {
+        icon: L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          iconSize: [36, 58],
+          iconAnchor: [18, 58]
+        })
+      }).addTo(map);
+
+      fetch('./data/places.json')
+        .then(res => res.json())
+        .then((places) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          places.forEach(place => {
+            const placeLatLng = L.latLng(place.lat, place.lng);
+            const distance = map.distance(currentLatLng, placeLatLng);
+            if (distance <= 600) {
+              const point = map.latLngToContainerPoint(placeLatLng);
+              ctx.fillStyle = 'red';
+              ctx.beginPath();
+              ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+              ctx.fill();
+            }
+          });
+        });
+    });
+
+    map.on('locationerror', () => {
+      alert('現在地の取得に失敗しました。');
+    });
+  </script>
+</body>
 </html>

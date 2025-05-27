@@ -1,7 +1,5 @@
-// 地図の初期化（とりあえず東京駅）
 const map = L.map('map').setView([35.681236, 139.767125], 12);
 
-// タイルレイヤー追加
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
@@ -13,55 +11,14 @@ type Place = {
   url: string;
   tags: string[];
 };
-// ✅ 現在地取得
-map.locate({ setView: true, maxZoom: 16 });
 
 let allMarkers: L.Marker[] = [];
-map.on('locationfound', (e: L.LocationEvent) => {
-  L.marker(e.latlng)
-    .addTo(map)
-    .bindPopup('現在地')
-    .openPopup();
-});
 
-fetch('./data/places.json')
-  .then(res => res.json())
-  .then((places: Place[]) => {
-    const tagSet = new Set<string>();
-    places.forEach(p => p.tags.forEach(tag => tagSet.add(tag)));
-    const tags = Array.from(tagSet);
-
-    console.log("読み込んだタグ一覧:", tags);
-
-    // フィルターボタンを生成
-    const buttonContainer = document.getElementById("tag-buttons")!;
-    tags.forEach(tag => {
-      const button = document.createElement("button");
-      button.textContent = tag;
-      button.style.margin = "4px";
-      button.onclick = () => {
-        showMarkers(places.filter(p => p.tags.includes(tag)));
-      };
-      buttonContainer.appendChild(button);
-    });
-
-    // 全表示ボタンも追加
-    const allBtn = document.createElement("button");
-    allBtn.textContent = "すべて表示";
-    allBtn.style.margin = "4px";
-    allBtn.onclick = () => showMarkers(places);
-    buttonContainer.prepend(allBtn);
-
-    // 初回はすべて表示
-    showMarkers(places);
-  });
-
+// ✅ マーカー表示関数（places: Place[] を受け取って表示）
 function showMarkers(places: Place[]) {
-  // 既存マーカーを削除
   allMarkers.forEach(m => map.removeLayer(m));
   allMarkers = [];
 
-  // 新しいマーカーを追加
   places.forEach(place => {
     const tagText = place.tags.map(tag =>
       `<span style="background:#eee;padding:2px 4px;margin:2px;border-radius:4px;">${tag}</span>`
@@ -78,6 +35,52 @@ function showMarkers(places: Place[]) {
     allMarkers.push(marker);
   });
 }
-map.on('locationerror', (e) => {
+
+// ✅ 現在地取得後、600m以内のスポットを表示
+map.locate({ setView: true, maxZoom: 16 });
+
+map.on('locationfound', (e: L.LocationEvent) => {
+  const currentLatLng = e.latlng;
+
+  // 現在地マーカー
+  L.marker(currentLatLng)
+    .addTo(map)
+    .bindPopup('現在地')
+    .openPopup();
+
+  // 中心円（半径600m）
+  L.circle(currentLatLng, {
+    radius: 600,
+    color: 'green',
+    fillColor: '#0f0',
+    fillOpacity: 0.05,
+    weight: 2
+  }).addTo(map);
+
+  // ガイド円（100mごと）
+  [100, 200, 300, 400, 500, 600].forEach(r => {
+    L.circle(currentLatLng, {
+      radius: r,
+      color: 'rgba(0,255,0,0.2)',
+      weight: 1,
+      fillOpacity: 0
+    }).addTo(map);
+  });
+
+  // JSON取得後、距離判定 → フィルタ表示
+  fetch('./data/places.json')
+    .then(res => res.json())
+    .then((places: Place[]) => {
+      const nearby = places.filter(place => {
+        const placeLatLng = L.latLng(place.lat, place.lng);
+        const distance = map.distance(currentLatLng, placeLatLng);
+        return distance <= 600;
+      });
+
+      showMarkers(nearby);
+    });
+});
+
+map.on('locationerror', () => {
   alert('現在地の取得に失敗しました。ブラウザの位置情報設定をご確認ください。');
 });
