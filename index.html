@@ -4,10 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ドラゴンレーダー風地図</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body {
       margin: 0;
@@ -18,49 +15,45 @@
       align-items: center;
     }
 
-    .radar-frame {
+    .map-container {
       position: relative;
       width: 600px;
       height: 600px;
-      border-radius: 50%;
-      overflow: hidden;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .frame-overlay {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      z-index: 3;
-      pointer-events: none;
     }
 
     #map {
       position: absolute;
+      width: 600px;
+      height: 600px;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      clip-path: circle(50% at 50% 50%);
       z-index: 1;
     }
 
-    #radar-overlay {
+    .radar-overlay {
       position: absolute;
+      width: 600px;
+      height: 600px;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
       pointer-events: none;
+      background: url('./dragon_radar_frame_transparent.png') no-repeat center/contain;
       z-index: 2;
+    }
+
+    .leaflet-control-zoom {
+      position: absolute !important;
+      left: 50% !important;
+      top: 612px !important;
+      transform: translateX(-50%) !important;
+      z-index: 9999 !important;
     }
   </style>
 </head>
 <body>
-  <div class="radar-frame">
-    <img src="./dragon_radar_frame_transparent.png" class="frame-overlay" alt="ドラゴンレーダー枠">
+  <div class="map-container">
     <div id="map"></div>
-    <canvas id="radar-overlay" width="600" height="600"></canvas>
+    <div class="radar-overlay"></div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -69,51 +62,23 @@
       zoomControl: true,
       attributionControl: false,
       dragging: false,
-      scrollWheelZoom: true,
       doubleClickZoom: true,
+      scrollWheelZoom: true,
       boxZoom: false,
       keyboard: false,
-      touchZoom: true
-    });
+    }).setView([35.681236, 139.767125], 17);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
     }).addTo(map);
 
-    const canvas = document.getElementById("radar-overlay");
-    const ctx = canvas.getContext("2d");
-
-    map.locate({ watch: true, setView: true, maxZoom: 18 });
+    // 現在位置を取得して中心に設定
+    map.locate({ setView: true, maxZoom: 18 });
 
     map.on('locationfound', function (e) {
       const currentLatLng = e.latlng;
-
       map.setView(currentLatLng, map.getZoom());
-
-      L.marker(currentLatLng, {
-        icon: L.icon({
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          iconSize: [36, 58],
-          iconAnchor: [18, 58]
-        })
-      }).addTo(map);
-
-      fetch('./data/places.json')
-        .then(res => res.json())
-        .then((places) => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          places.forEach(place => {
-            const placeLatLng = L.latLng(place.lat, place.lng);
-            const distance = map.distance(currentLatLng, placeLatLng);
-            if (distance <= 600) {
-              const point = map.latLngToContainerPoint(placeLatLng);
-              ctx.fillStyle = 'red';
-              ctx.beginPath();
-              ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
-              ctx.fill();
-            }
-          });
-        });
+      L.marker(currentLatLng).addTo(map);
     });
 
     map.on('locationerror', () => {
