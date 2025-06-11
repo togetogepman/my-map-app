@@ -1,0 +1,59 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.map-container {
+  position: relative;
+  width: 600px;
+  height: 600px;
+}
+
+#map {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  overflow: hidden;
+  transition: border-radius 0.3s;
+}
+
+.radar-overlay {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: url('./dragon_radar_frame_transparent.png') no-repeat center/contain;
+  z-index: 2;
+}
+
+.custom-zoom-controls {
+  position: absolute;
+  top: 50%;
+  left: 80%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.custom-zoom-controls button {
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}

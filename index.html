@@ -5,67 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ドラゴンレーダー風地図</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .map-container {
-      position: relative;
-      width: 600px;
-      height: 600px;
-    }
-
-    #map {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      top: 0;
-      left: 0;
-      z-index: 1;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-
-    .radar-overlay {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      background: url('./dragon_radar_frame_transparent.png') no-repeat center/contain;
-      z-index: 2;
-    }
-
-    .custom-zoom-controls {
-      position: absolute;
-      top: 50%;
-      left: 80%;
-      transform: translate(-50%, -50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .custom-zoom-controls button {
-      width: 20px;
-      height: 20px;
-      font-size: 14px;
-      border: none;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 4px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="map-container">
@@ -78,43 +18,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map', {
-      zoomControl: true,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      touchZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-
-    // 現在地取得 → 中心に表示
-    map.locate({ setView: true, maxZoom: 18 });
-
-    map.on('locationfound', function (e) {
-      const currentLatLng = e.latlng;
-      map.setView(currentLatLng, map.getZoom());
-      L.marker(currentLatLng).addTo(map);
-    });
-
-    map.on('locationerror', () => {
-      alert('現在地の取得に失敗しました。');
-    });
-
-    // 独自ズームボタンのイベント
-    document.getElementById('zoom-in').addEventListener('click', () => {
-      map.zoomIn();
-    });
-
-    document.getElementById('zoom-out').addEventListener('click', () => {
-      map.zoomOut();
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
