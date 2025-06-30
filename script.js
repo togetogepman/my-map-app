@@ -45,11 +45,16 @@ if (DEBUG_MODE) {
   document.getElementById('map').style.borderRadius = '50%';
 }
 
-// 暗渠データ（ankyomap.geojson）読み込み
+// レイヤー用変数
+let ankyomapLayer = null;
+let routeLayer = null;
+let spotLayer = null;
+
+// 暗渠データ読み込み
 fetch('data/ankyomap.geojson')
   .then(response => response.json())
   .then(data => {
-    L.geoJSON(data, {
+    ankyomapLayer = L.geoJSON(data, {
       style: {
         color: '#0000ff',
         weight: 2,
@@ -58,39 +63,65 @@ fetch('data/ankyomap.geojson')
     }).addTo(map);
   })
   .catch(error => {
-    console.error('GeoJSONの読み込みに失敗:', error);
+    console.error('暗渠データの読み込みに失敗:', error);
   });
 
-// 🔴 ルートデータ（route.geojson）読み込み
-fetch('data/route.geojson')
+// ルートデータ読み込み
+fetch('data/route.json')
   .then(response => response.json())
   .then(data => {
-    L.geoJSON(data, {
+    routeLayer = L.geoJSON(data, {
       style: {
-        color: 'red',
-        weight: 4
+        color: '#ff0000',
+        weight: 3,
+        opacity: 0.9
       }
     }).addTo(map);
   })
   .catch(error => {
-    console.error('route.geojsonの読み込みに失敗:', error);
+    console.error('ルートデータの読み込みに失敗:', error);
   });
 
-// 📍 スポットデータ（spot.geojson）読み込み
-fetch('data/spot.geojson')
+// スポットデータ読み込み
+fetch('data/spot.json')
   .then(response => response.json())
   .then(data => {
-    L.geoJSON(data, {
-      pointToLayer: function (feature, latlng) {
+    spotLayer = L.geoJSON(data, {
+      pointToLayer: (feature, latlng) => {
         return L.marker(latlng);
       },
-      onEachFeature: function (feature, layer) {
-        const name = feature.properties?.name || '名称なし';
-        const desc = feature.properties?.description || '';
+      onEachFeature: (feature, layer) => {
+        const name = feature.properties.name || "スポット";
+        const desc = feature.properties.description || "";
         layer.bindPopup(`<strong>${name}</strong><br>${desc}`);
       }
     }).addTo(map);
   })
   .catch(error => {
-    console.error('spot.geojsonの読み込みに失敗:', error);
+    console.error('スポットデータの読み込みに失敗:', error);
   });
+
+// トグル切り替え処理
+document.getElementById('toggle-ankyomap').addEventListener('change', function () {
+  if (this.checked) {
+    if (ankyomapLayer) ankyomapLayer.addTo(map);
+  } else {
+    if (ankyomapLayer) map.removeLayer(ankyomapLayer);
+  }
+});
+
+document.getElementById('toggle-route').addEventListener('change', function () {
+  if (this.checked) {
+    if (routeLayer) routeLayer.addTo(map);
+  } else {
+    if (routeLayer) map.removeLayer(routeLayer);
+  }
+});
+
+document.getElementById('toggle-spot').addEventListener('change', function () {
+  if (this.checked) {
+    if (spotLayer) spotLayer.addTo(map);
+  } else {
+    if (spotLayer) map.removeLayer(spotLayer);
+  }
+});
