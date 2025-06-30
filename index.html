@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ドラゴンレーダー風地図</title>
+  <title>散歩ログPoC</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
+  <!-- <link rel="stylesheet" href="dragon-radar.css" /> -->
 </head>
 <body>
   <div class="map-container">
@@ -15,14 +16,18 @@
       <label><input type="checkbox" id="toggle-route" checked> ルート</label>
       <label><input type="checkbox" id="toggle-spot" checked> スポット</label>
     </div>
-    <div class="radar-overlay"></div>
-    <div class="custom-zoom-controls">
-      <button id="zoom-in">＋</button>
-      <button id="zoom-out">−</button>
+    <!-- <div class="radar-overlay"></div> -->
+    <div class="log-controls">
+      <button id="start-recording">記録開始</button>
+      <button id="stop-recording" disabled>記録終了</button>
+      <button id="save-log" disabled>ログ保存</button>
+      <button id="load-log">ログ読込</button>
+      <input type="file" id="log-file-input" accept=".geojson" style="display: none;" />
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js"></script>
+  <script src="dist/main.js"></script>
+  <!-- <script src="dist/dragon-radar.js"></script> -->
 </body>
 </html>

@@ -1,63 +1,216 @@
 "use strict";
-const map = L.map('map').setView([35.681236, 139.767125], 12);
+// --- 1. 初期設定・DOM要素取得 ---
+const map = L.map('map', {
+    zoomControl: true
+}).setView([35.681236, 139.767125], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
-let allMarkers = [];
-// ✅ マーカー表示関数（places: Place[] を受け取って表示）
-function showMarkers(places) {
-    allMarkers.forEach(m => map.removeLayer(m));
-    allMarkers = [];
-    places.forEach(place => {
-        const tagText = place.tags.map(tag => `<span style="background:#eee;padding:2px 4px;margin:2px;border-radius:4px;">${tag}</span>`).join(' ');
-        const marker = L.marker([place.lat, place.lng])
-            .addTo(map)
-            .bindPopup(`
-        <strong>${place.name}</strong><br>
-        <a href="${place.url}" target="_blank">詳細を見る</a><br>
-        ${tagText}
-      `);
-        allMarkers.push(marker);
-    });
+// 地図のサイズを再計算して表示崩れを防ぐ
+setTimeout(() => {
+    map.invalidateSize();
+}, 100);
+// ログ記録ボタン
+const startButton = document.getElementById('start-recording');
+const stopButton = document.getElementById('stop-recording');
+const saveButton = document.getElementById('save-log');
+const loadButton = document.getElementById('load-log');
+const fileInput = document.getElementById('log-file-input');
+// レイヤー切り替えチェックボックス
+const toggleAnkyomap = document.getElementById('toggle-ankyomap');
+const toggleRoute = document.getElementById('toggle-route');
+const toggleSpot = document.getElementById('toggle-spot');
+// --- 2. データレイヤーの管理 ---
+const layerGroups = {
+    ankyomap: L.layerGroup(),
+    route: L.layerGroup(),
+    spot: L.layerGroup(),
+    log: L.layerGroup() // 読み込んだログを表示するレイヤー
+};
+// --- 3. データ読み込みとレイヤー作成 ---
+// 3.1 暗渠 (GeoJSON)
+fetch('./data/ankyomap.geojson')
+    .then(res => res.json())
+    .then(data => {
+    L.geoJSON(data, {
+        style: { color: '#0000ff', weight: 3, opacity: 0.7 }
+    }).addTo(layerGroups.ankyomap);
+});
+// 3.2 ルート (GeoJSON)
+fetch('./data/route.json')
+    .then(res => res.json())
+    .then(data => {
+    L.geoJSON(data, {
+        style: { color: 'green', weight: 5, opacity: 0.8 }
+    }).addTo(layerGroups.route);
+});
+// 3.3 スポット (GeoJSON)
+fetch('./data/spot.json')
+    .then(res => res.json())
+    .then(data => {
+    L.geoJSON(data, {
+        onEachFeature: (feature, layer) => {
+            if (feature.properties && feature.properties.name) {
+                layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
+            }
+        }
+    }).addTo(layerGroups.spot);
+});
+// --- 4. レイヤー切り替え機能 ---
+function toggleLayer(layer, isVisible) {
+    if (isVisible) {
+        map.addLayer(layer);
+    }
+    else {
+        map.removeLayer(layer);
+    }
 }
-// ✅ 現在地取得後、600m以内のスポットを表示
+// 初期状態でレイヤーを表示
+toggleLayer(layerGroups.ankyomap, toggleAnkyomap.checked);
+toggleLayer(layerGroups.route, toggleRoute.checked);
+toggleLayer(layerGroups.spot, toggleSpot.checked);
+// チェックボックスのイベントリスナー
+toggleAnkyomap.addEventListener('change', (e) => toggleLayer(layerGroups.ankyomap, e.target.checked));
+toggleRoute.addEventListener('change', (e) => toggleLayer(layerGroups.route, e.target.checked));
+toggleSpot.addEventListener('change', (e) => toggleLayer(layerGroups.spot, e.target.checked));
+// --- 5. GPSログ記録機能 ---
+let isRecording = false;
+let watchId = null;
+let recordedPath = [];
+let logPolyline = null;
+let currentPositionMarker = null;
+startButton.addEventListener('click', startRecording);
+stopButton.addEventListener('click', stopRecording);
+saveButton.addEventListener('click', saveLog);
+function startRecording() {
+    if (isRecording)
+        return;
+    isRecording = true;
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    saveButton.disabled = true;
+    recordedPath = [];
+    if (logPolyline)
+        map.removeLayer(logPolyline);
+    logPolyline = null;
+    watchId = navigator.geolocation.watchPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        const newPosition = L.latLng(latitude, longitude);
+        recordedPath.push(newPosition);
+        map.setView(newPosition, 16);
+        if (logPolyline) {
+            logPolyline.setLatLngs(recordedPath);
+        }
+        else {
+            logPolyline = L.polyline(recordedPath, { color: 'red', weight: 4 }).addTo(map);
+        }
+        if (currentPositionMarker) {
+            currentPositionMarker.setLatLng(newPosition);
+        }
+        else {
+            currentPositionMarker = L.marker(newPosition, {
+                icon: L.divIcon({
+                    className: 'current-position-marker',
+                    html: '<div style="background-color: blue; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px #333;"></div>',
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8]
+                })
+            }).addTo(map).bindPopup('記録中...').openPopup();
+        }
+    }, (error) => {
+        console.error('Geolocation Error:', error);
+        alert('位置情報の取得に失敗しました。');
+        stopRecording();
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+}
+function stopRecording() {
+    if (!isRecording)
+        return;
+    isRecording = false;
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    saveButton.disabled = recordedPath.length > 0;
+    if (watchId !== null)
+        navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    if (currentPositionMarker) {
+        map.removeLayer(currentPositionMarker);
+        currentPositionMarker = null;
+    }
+}
+function saveLog() {
+    if (recordedPath.length < 2) {
+        alert('ログが短すぎます。');
+        return;
+    }
+    const geojson = {
+        type: 'FeatureCollection',
+        features: [{
+                type: 'Feature',
+                properties: { name: 'Walk Log', time: new Date().toISOString() },
+                geometry: {
+                    type: 'LineString',
+                    coordinates: recordedPath.map((latlng) => [latlng.lng, latlng.lat])
+                }
+            }]
+    };
+    const blob = new Blob([JSON.stringify(geojson, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date();
+    const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    a.href = url;
+    a.download = `${formattedDate}-log.geojson`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    saveButton.disabled = true;
+}
+// --- 6. 初期化処理 ---
 map.locate({ setView: true, maxZoom: 16 });
 map.on('locationfound', (e) => {
-    const currentLatLng = e.latlng;
-    // 現在地マーカー
-    L.marker(currentLatLng)
-        .addTo(map)
-        .bindPopup('現在地')
-        .openPopup();
-    // 中心円（半径600m）
-    L.circle(currentLatLng, {
-        radius: 600,
-        color: 'green',
-        fillColor: '#0f0',
-        fillOpacity: 0.05,
-        weight: 2
-    }).addTo(map);
-    // ガイド円（100mごと）
-    [100, 200, 300, 400, 500, 600].forEach(r => {
-        L.circle(currentLatLng, {
-            radius: r,
-            color: 'rgba(0,255,0,0.2)',
-            weight: 1,
-            fillOpacity: 0
-        }).addTo(map);
-    });
-    // JSON取得後、距離判定 → フィルタ表示
-    fetch('./data/places.json')
-        .then(res => res.json())
-        .then((places) => {
-        const nearby = places.filter(place => {
-            const placeLatLng = L.latLng(place.lat, place.lng);
-            const distance = map.distance(currentLatLng, placeLatLng);
-            return distance <= 600;
-        });
-        showMarkers(nearby);
-    });
+    if (!isRecording) {
+        L.marker(e.latlng)
+            .addTo(map)
+            .bindPopup('現在地')
+            .openPopup();
+    }
 });
 map.on('locationerror', () => {
-    alert('現在地の取得に失敗しました。ブラウザの位置情報設定をご確認ください。');
+    alert('現在地の取得に失敗しました。');
+});
+// --- 7. ログ読み込み機能 ---
+loadButton.addEventListener('click', () => {
+    fileInput.click(); // ボタンクリックで非表示のinputをトリガー
+});
+fileInput.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!input.files || input.files.length === 0) {
+        return;
+    }
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        var _a;
+        try {
+            const content = (_a = e.target) === null || _a === void 0 ? void 0 : _a.result;
+            if (typeof content !== 'string')
+                return;
+            const geojson = JSON.parse(content);
+            // 読み込んだログを青い線で表示
+            L.geoJSON(geojson, {
+                style: { color: '#00aaff', weight: 4, opacity: 0.75 }
+            }).addTo(layerGroups.log);
+            // ログレイヤーを地図に追加
+            layerGroups.log.addTo(map);
+        }
+        catch (error) {
+            console.error('ファイルの読み込みまたはパースに失敗しまし���。', error);
+            alert('GeoJSONファイルの形式が正しくありません。');
+        }
+    };
+    reader.readAsText(file);
+    // 同じファイルを再度選択できるように、inputの値をクリアする
+    input.value = '';
 });
