@@ -45,7 +45,7 @@ if (DEBUG_MODE) {
   document.getElementById('map').style.borderRadius = '50%';
 }
 
-// GeoJSON 読み込み
+// 暗渠データ（ankyomap.geojson）読み込み
 fetch('data/ankyomap.geojson')
   .then(response => response.json())
   .then(data => {
@@ -59,4 +59,38 @@ fetch('data/ankyomap.geojson')
   })
   .catch(error => {
     console.error('GeoJSONの読み込みに失敗:', error);
+  });
+
+// 🔴 ルートデータ（route.geojson）読み込み
+fetch('data/route.geojson')
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      style: {
+        color: 'red',
+        weight: 4
+      }
+    }).addTo(map);
+  })
+  .catch(error => {
+    console.error('route.geojsonの読み込みに失敗:', error);
+  });
+
+// 📍 スポットデータ（spot.geojson）読み込み
+fetch('data/spot.geojson')
+  .then(response => response.json())
+  .then(data => {
+    L.geoJSON(data, {
+      pointToLayer: function (feature, latlng) {
+        return L.marker(latlng);
+      },
+      onEachFeature: function (feature, layer) {
+        const name = feature.properties?.name || '名称なし';
+        const desc = feature.properties?.description || '';
+        layer.bindPopup(`<strong>${name}</strong><br>${desc}`);
+      }
+    }).addTo(map);
+  })
+  .catch(error => {
+    console.error('spot.geojsonの読み込みに失敗:', error);
   });
