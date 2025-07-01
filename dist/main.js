@@ -16,16 +16,19 @@ const stopButton = document.getElementById('stop-recording');
 const saveButton = document.getElementById('save-log');
 const loadButton = document.getElementById('load-log');
 const fileInput = document.getElementById('log-file-input');
+const saveRouteButton = document.getElementById('save-route');
 // レイヤー切り替えチェックボックス
 const toggleAnkyomap = document.getElementById('toggle-ankyomap');
 const toggleRoute = document.getElementById('toggle-route');
 const toggleSpot = document.getElementById('toggle-spot');
+const toggleRouteFix = document.getElementById('toggle-route-fix');
 // --- 2. データレイヤーの管理 ---
 const layerGroups = {
     ankyomap: L.layerGroup(),
-    route: L.layerGroup(),
+    route: L.featureGroup(), // FeatureGroup for draw controls
     spot: L.layerGroup(),
-    log: L.layerGroup() // 読み込んだログを表示するレイヤー
+    log: L.layerGroup(), // 読み込んだログを表示するレイヤー
+    route_fix: L.layerGroup()
 };
 // --- 3. データ読み込みとレイヤー作成 ---
 // 3.1 暗渠 (GeoJSON)
@@ -36,13 +39,15 @@ fetch('./data/ankyomap.geojson')
         style: { color: '#0000ff', weight: 3, opacity: 0.7 }
     }).addTo(layerGroups.ankyomap);
 });
-// 3.2 ルート (GeoJSON)
+// 3.2 ルート (GeoJSON) - 編集可能レイヤーとして読み込み
 fetch('./data/route.json')
     .then(res => res.json())
     .then(data => {
     L.geoJSON(data, {
         style: { color: 'green', weight: 5, opacity: 0.8 }
-    }).addTo(layerGroups.route);
+    }).eachLayer((layer) => {
+        layerGroups.route.addLayer(layer);
+    });
 });
 // 3.3 スポット (GeoJSON)
 fetch('./data/spot.json')
@@ -55,6 +60,14 @@ fetch('./data/spot.json')
             }
         }
     }).addTo(layerGroups.spot);
+});
+// 3.4 修正済みルート (GeoJSON)
+fetch('./data/route_fix.geojson')
+    .then(res => res.json())
+    .then(data => {
+    L.geoJSON(data, {
+        style: { color: 'red', weight: 5, opacity: 0.8 }
+    }).addTo(layerGroups.route_fix);
 });
 // --- 4. レイヤー切り替え機能 ---
 function toggleLayer(layer, isVisible) {
@@ -69,10 +82,12 @@ function toggleLayer(layer, isVisible) {
 toggleLayer(layerGroups.ankyomap, toggleAnkyomap.checked);
 toggleLayer(layerGroups.route, toggleRoute.checked);
 toggleLayer(layerGroups.spot, toggleSpot.checked);
+toggleLayer(layerGroups.route_fix, toggleRouteFix.checked);
 // チェックボックスのイベントリスナー
 toggleAnkyomap.addEventListener('change', (e) => toggleLayer(layerGroups.ankyomap, e.target.checked));
 toggleRoute.addEventListener('change', (e) => toggleLayer(layerGroups.route, e.target.checked));
 toggleSpot.addEventListener('change', (e) => toggleLayer(layerGroups.spot, e.target.checked));
+toggleRouteFix.addEventListener('change', (e) => toggleLayer(layerGroups.route_fix, e.target.checked));
 // --- 5. GPSログ記録機能 ---
 let isRecording = false;
 let watchId = null;
@@ -119,7 +134,7 @@ function startRecording() {
         }
     }, (error) => {
         console.error('Geolocation Error:', error);
-        alert('位置情報の取得に失敗しました。');
+        alert('位置情報の取��に失敗しました。');
         stopRecording();
     }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 }
@@ -206,11 +221,57 @@ fileInput.addEventListener('change', (event) => {
             layerGroups.log.addTo(map);
         }
         catch (error) {
-            console.error('ファイルの読み込みまたはパースに失敗しまし���。', error);
+            console.error('ファイルの読み込みまたはパースに失敗しました。', error);
             alert('GeoJSONファイルの形式が正しくありません。');
         }
     };
     reader.readAsText(file);
     // 同じファイルを再度選択できるように、inputの値をクリアする
     input.value = '';
+});
+// --- 8. レイヤーの初期表示 ---
+layerGroups.ankyomap.addTo(map);
+layerGroups.route.addTo(map);
+layerGroups.spot.addTo(map);
+layerGroups.route_fix.addTo(map);
+// --- 9. Leaflet.Draw ---
+const drawControl = new L.Control.Draw({
+    edit: {
+        featureGroup: layerGroups.route,
+        poly: {
+            allowIntersection: false
+        }
+    },
+    draw: {
+        polygon: false,
+        marker: false,
+        circle: false,
+        rectangle: false,
+        circlemarker: false,
+        polyline: {
+            shapeOptions: {
+                color: 'green',
+                weight: 5,
+                opacity: 0.8
+            }
+        }
+    }
+});
+map.addControl(drawControl);
+map.on(L.Draw.Event.CREATED, (e) => {
+    const layer = e.layer;
+    layerGroups.route.addLayer(layer);
+});
+saveRouteButton.addEventListener('click', () => {
+    const data = layerGroups.route.toGeoJSON();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'route.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('ルートがroute.jsonとして保存されました。');
 });

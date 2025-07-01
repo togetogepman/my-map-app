@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>散歩ログPoC</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="stylesheet" href="style.css" />
   <!-- <link rel="stylesheet" href="dragon-radar.css" /> -->
 </head>
@@ -15,6 +16,7 @@
       <label><input type="checkbox" id="toggle-ankyomap" checked> 暗渠</label>
       <label><input type="checkbox" id="toggle-route" checked> ルート</label>
       <label><input type="checkbox" id="toggle-spot" checked> スポット</label>
+      <label><input type="checkbox" id="toggle-route-fix" checked> 修正済みルート</label>
     </div>
     <!-- <div class="radar-overlay"></div> -->
     <div class="log-controls">
@@ -22,12 +24,14 @@
       <button id="stop-recording" disabled>記録終了</button>
       <button id="save-log" disabled>ログ保存</button>
       <button id="load-log">ログ読込</button>
+      <button id="save-route">ルートを保存</button>
       <input type="file" id="log-file-input" accept=".geojson" style="display: none;" />
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="dist/main.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script type="module" src="dist/main.js"></script>
   <!-- <script src="dist/dragon-radar.js"></script> -->
 </body>
 </html>
