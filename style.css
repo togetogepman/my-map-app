@@ -32,31 +32,43 @@ html, body {
   z-index: 1000;
 }
 
+.route-selector-container {
+  position: absolute;
+  top: 50px; /* layer-toggleの下に配置 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.route-selector {
+  padding: 4px 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
 .layer-toggle label {
   margin-right: 10px;
   cursor: pointer;
 }
 
-.log-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  gap: 10px;
+
+/* Leaflet Drawの編集アイコンを大きくする */
+.leaflet-draw-edit-edit,
+.leaflet-draw-edit-remove {
+    background-size: 20px 20px !important; /* アイコンサイズ */
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
 }
 
-.log-controls button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #fff;
-  cursor: pointer;
+/* Leaflet Drawのツールバー全体のスタイル調整 */
+.leaflet-draw-toolbar {
+    margin-top: 10px;
 }
 
-.log-controls button:disabled {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
+/* 現在地マーカーのスタイル */
+.current-position-marker div {
+    transition: transform 0.2s ease-out;
 }

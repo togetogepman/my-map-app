@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --outDir dist"
+    "build": "node generate-route-manifest.js && tsc --outDir dist"
   },
   "keywords": [],
   "author": "",

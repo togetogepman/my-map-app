@@ -1,0 +1,14 @@
+[
+  {
+    "name": "20250701",
+    "path": "./data/route/20250701.geojson"
+  },
+  {
+    "name": "route",
+    "path": "./data/route/route.json"
+  },
+  {
+    "name": "route_fix",
+    "path": "./data/route/route_fix.geojson"
+  }
+]

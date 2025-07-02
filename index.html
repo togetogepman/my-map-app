@@ -16,16 +16,9 @@
       <label><input type="checkbox" id="toggle-ankyomap" checked> 暗渠</label>
       <label><input type="checkbox" id="toggle-route" checked> ルート</label>
       <label><input type="checkbox" id="toggle-spot" checked> スポット</label>
-      <label><input type="checkbox" id="toggle-route-fix" checked> 修正済みルート</label>
     </div>
-    <!-- <div class="radar-overlay"></div> -->
-    <div class="log-controls">
-      <button id="start-recording">記録開始</button>
-      <button id="stop-recording" disabled>記録終了</button>
-      <button id="save-log" disabled>ログ保存</button>
-      <button id="load-log">ログ読込</button>
-      <button id="save-route">ルートを保存</button>
-      <input type="file" id="log-file-input" accept=".geojson" style="display: none;" />
+    <div class="route-selector-container">
+      <select id="route-selector" class="route-selector"></select>
     </div>
   </div>
 
