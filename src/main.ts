@@ -43,7 +43,11 @@ fetch('./data/spot.json')
     L.geoJSON(data, {
       onEachFeature: (feature: any, layer: any) => {
         if (feature.properties && feature.properties.name) {
-          layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
+          let popupContent = `<strong>${feature.properties.name}</strong>`;
+          if (feature.properties.photos && feature.properties.photos.length > 0) {
+            popupContent += `<br><img src="${feature.properties.photos[0]}" width="200">`;
+          }
+          layer.bindPopup(popupContent);
         }
       }
     }).addTo(layerGroups.spot);

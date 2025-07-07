@@ -4,11 +4,19 @@
     "path": "./data/route/20250701.geojson"
   },
   {
+    "name": "highway-tachikawa",
+    "path": "./data/route/highway-tachikawa.geojson"
+  },
+  {
     "name": "route",
     "path": "./data/route/route.json"
   },
   {
     "name": "route_fix",
     "path": "./data/route/route_fix.geojson"
+  },
+  {
+    "name": "tachisanpo",
+    "path": "./data/route/tachisanpo.geojson"
   }
 ]
