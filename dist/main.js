@@ -1,4 +1,7 @@
 "use strict";
+
+import highwayLabels from '/public/highway-labels.js';
+
 // --- 1. 初期設定・DOM要素取得 ---
 const map = L.map('map', {
     zoomControl: true
@@ -62,6 +65,7 @@ fetch('./data/route/highway/highway-tachikawa.geojson')
     data.features.forEach((f) => {
         values.add(f.properties.highway || 'その他');
     });
+    console.log(`道路属性の種類: ${values.size} 件`, Array.from(values));
     createAttributeCheckboxes(Array.from(values));
     updateRoadLayer();
 });
@@ -173,7 +177,9 @@ function createAttributeCheckboxes(values) {
         input.checked = true;
         input.addEventListener('change', updateRoadLayer);
         label.appendChild(input);
-        label.append(` ${v}`);
+        // 翻訳マップにあれば日本語ラベル、なければ英語キー
+        const labelText = highwayLabels[v] ?? v;
+        label.append(` ${labelText}`);
         attributeList.appendChild(label);
     });
 }

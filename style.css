@@ -53,10 +53,10 @@ html, body {
   cursor: pointer;
 }
 
-filter-button {
+.filter-button {
   position: absolute;
   top: 110px;
-  right: 10px;
+  left: 10px;
   z-index: 1000;
   padding: 4px 8px;
 }
@@ -64,12 +64,14 @@ filter-button {
 .filter-panel {
   position: absolute;
   top: 150px;
-  right: 10px;
-  background: rgba(255, 255, 255, 0.9);
+  left: 10px;
+  z-index: 10000; 
+  background: white;
+  border: 1px solid #ccc;
   padding: 8px;
-  border-radius: 4px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  max-height: 80vh; 
+  width: 220px;  
+  overflow-y: auto; 
 }
 
 .hidden {
