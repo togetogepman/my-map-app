@@ -53,6 +53,33 @@ html, body {
   cursor: pointer;
 }
 
+filter-button {
+  position: absolute;
+  top: 110px;
+  right: 10px;
+  z-index: 1000;
+  padding: 4px 8px;
+}
+
+.filter-panel {
+  position: absolute;
+  top: 150px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.hidden {
+  display: none;
+}
+
+.attribute-list label {
+  display: block;
+  margin-bottom: 4px;
+}
 
 /* Leaflet Drawの編集アイコンを大きくする */
 .leaflet-draw-edit-edit,

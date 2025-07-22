@@ -14,12 +14,19 @@
     <div id="map"></div>
     <div id="layer-toggle" class="layer-toggle">
       <label><input type="checkbox" id="toggle-ankyomap" checked> 暗渠</label>
+      <label><input type="checkbox" id="toggle-road" checked> 道路</label>
       <label><input type="checkbox" id="toggle-route" checked> ルート</label>
       <label><input type="checkbox" id="toggle-spot" checked> スポット</label>
     </div>
     <div class="route-selector-container">
       <select id="route-selector" class="route-selector"></select>
     </div>
+  </div>
+ 
+  <button id="filter-button" class="filter-button">属性フィルタ</button>
+  <div id="filter-panel" class="filter-panel hidden">
+    <h3>道路属性</h3>
+    <div id="attribute-list" class="attribute-list"></div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

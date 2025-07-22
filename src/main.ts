@@ -12,18 +12,31 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 setTimeout(() => map.invalidateSize(), 100);
 
 const toggleAnkyomap = document.getElementById('toggle-ankyomap') as HTMLInputElement;
+const toggleRoad = document.getElementById('toggle-road') as HTMLInputElement;
 const toggleRoute = document.getElementById('toggle-route') as HTMLInputElement;
 const toggleSpot = document.getElementById('toggle-spot') as HTMLInputElement;
+
+const filterButton = document.getElementById('filter-button') as HTMLButtonElement;
+const filterPanel = document.getElementById('filter-panel') as HTMLElement;
+const attributeList = document.getElementById('attribute-list') as HTMLElement;
+
+filterButton.addEventListener('click', () => {
+  filterPanel.classList.toggle('hidden');
+});
 
 // --- 2. データレイヤーの管理 ---
 const layerGroups = {
   ankyomap: L.layerGroup(),
+  road: L.layerGroup(),
   spot: L.layerGroup(),
 };
 
 const routeLayers: { [key: string]: any } = {};
 let activeRouteLayer: any = null;
 let activeRouteKey: string | null = null;
+
+let roadData: any = null;
+let roadLayer: any = null;
 
 // --- 3. データ読み込みとレイヤー作成 ---
 
@@ -53,7 +66,20 @@ fetch('./data/spot.json')
     }).addTo(layerGroups.spot);
   });
 
-// 3.3 ルートの動的読み込みとプルダウン生成
+// 3.3 道路レイヤ (GeoJSON)
+fetch('./data/route/highway/highway-tachikawa.geojson')
+  .then(res => res.json())
+  .then(data => {
+    roadData = data;
+    const values = new Set<string>();
+    data.features.forEach((f: any) => {
+      values.add(f.properties.highway || 'その他');
+    });
+    createAttributeCheckboxes(Array.from(values));
+    updateRoadLayer();
+  });
+
+// 3.4 ルートの動的読み込みとプルダウン生成
 fetch('./public/route-list.json')
   .then(res => res.json())
   .then(routeList => {
@@ -125,9 +151,13 @@ function toggleLayer(layer: any, isVisible: boolean) {
 }
 
 toggleLayer(layerGroups.ankyomap, toggleAnkyomap.checked);
+if (roadLayer) toggleLayer(roadLayer, toggleRoad.checked);
 toggleLayer(layerGroups.spot, toggleSpot.checked);
 
 toggleAnkyomap.addEventListener('change', (e) => toggleLayer(layerGroups.ankyomap, (e.target as HTMLInputElement).checked));
+toggleRoad.addEventListener('change', (e) => {
+  if (roadLayer) toggleLayer(roadLayer, (e.target as HTMLInputElement).checked);
+});
 toggleRoute.addEventListener('change', (e) => {
     if (activeRouteLayer) {
         toggleLayer(activeRouteLayer, (e.target as HTMLInputElement).checked);
@@ -150,3 +180,46 @@ map.on('locationerror', () => {
 // --- 8. レイヤーの初期表示 ---
 layerGroups.ankyomap.addTo(map);
 layerGroups.spot.addTo(map);
+
+function createAttributeCheckboxes(values: string[]) {
+  attributeList.innerHTML = '';
+  values.forEach(v => {
+    const id = `attr-${v}`;
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.id = id;
+    input.value = v;
+    input.checked = true;
+    input.addEventListener('change', updateRoadLayer);
+    label.appendChild(input);
+    label.append(` ${v}`);
+    attributeList.appendChild(label);
+  });
+}
+
+function updateRoadLayer() {
+  if (!roadData) return;
+  const selected: string[] = [];
+  attributeList.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    if ((el as HTMLInputElement).checked) {
+      selected.push((el as HTMLInputElement).value);
+    }
+  });
+
+  if (roadLayer) {
+    map.removeLayer(roadLayer);
+  }
+
+  roadLayer = L.geoJSON(roadData, {
+    filter: (feature: any) => {
+      const val = feature.properties.highway || 'その他';
+      return selected.includes(val);
+    },
+    style: { color: '#333', weight: 2, opacity: 0.7 }
+  });
+
+  if (toggleRoad.checked) {
+    roadLayer.addTo(map);
+  }
+}
