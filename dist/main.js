@@ -205,4 +205,43 @@ function updateRoadLayer() {
     if (toggleRoad.checked) {
         roadLayer.addTo(map);
     }
+// ----------  交差点レイヤーを読み込んで描画 ----------
+let intersectionLayer = null;     // グローバルで保持
+
+async function addIntersectionLayer() {
+  const res  = await fetch('./data/route/highway/intersections.geojson');
+  const data = await res.json();
+
+  intersectionLayer = L.geoJSON(data, {
+    pointToLayer: (feature, latlng) =>
+      L.circleMarker(latlng, {
+        radius: 4,
+        color: '#ff0000',
+        weight: 1,
+        fillColor: '#ff6666',
+        fillOpacity: 0.8,
+      }),
+  });
+
+  // トグルが ON なら最初から表示
+  const cb = document.getElementById('toggle-intersection');
+  if (!cb || cb.checked) {
+    intersectionLayer.addTo(map);
+  }
+}
+
+addIntersectionLayer();   // ← ページ読み込み時に呼び出す
+
+// ----------  チェックボックスで表示／非表示を切替 ----------
+const toggleIntersection = document.getElementById('toggle-intersection');
+if (toggleIntersection) {
+  toggleIntersection.addEventListener('change', (e) => {
+    if (!intersectionLayer) return;          // まだ読み込み中なら何もしない
+    if (e.target.checked) {
+      intersectionLayer.addTo(map);          // 表示
+    } else {
+      map.removeLayer(intersectionLayer);    // 非表示
+    }
+  });
+}
 }

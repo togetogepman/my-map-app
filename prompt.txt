@@ -1,0 +1,44 @@
+# Instructions for Gemini CLI
+You are asked to generate a reusable Python 3.10 script that finds branching-point intersections (degree ≥ 3) in *any* Linestring-only GeoJSON, and writes them to a new GeoJSON.
+
+## Functional spec
+1. **CLI arguments**
+python extract_intersections.py
+--in <input_geojson_path> (required)
+--out <output_geojson_path> (default: intersections.geojson)
+--snap <tolerance_meters> (float, default: 1.0)
+
+markdown
+コピーする
+編集する
+2. **Processing steps**
+1. Read input with GeoPandas.
+2. Ensure CRS is EPSG:4326; re-project if not.
+3. Merge all LineStrings (`shapely.ops.unary_union`).
+4. Snap vertices within *snap* m (`shapely.ops.snap`).
+5. Split lines into atomic segments (`shapely.ops.split`).
+6. Count vertex degree; keep those with degree ≥ 3.
+3. **Output**
+* Write result GeoJSON to `--out`.
+* Print summary: number of input features, number of intersections written.
+4. **Dependencies**
+* Only `geopandas`, `shapely`, `pyproj`, `argparse`, `typing`, `pathlib`.
+* At top of script, include a comment:
+  ```
+  # pip install geopandas shapely pyproj
+  ```
+5. **Deliverables**
+1. Provide the **full Python script** (English comments, PEP-8).
+2. After the code, provide a concise Japanese explanation covering:
+   - 依存関係インストール方法  
+   - 実行例（デフォルト / 引数付き）  
+   - アルゴリズム要点とスナップ許容誤差の調整方法  
+   - 出力結果の確認方法  
+* No emojis.
+
+## Style notes
+* Show the entire script in one block.
+* Keep explanations brief and clear.
+* Do not output anything beyond the requested two sections.
+
+Generate now.
